@@ -36,6 +36,8 @@ kubectl create secret docker-registry swiggy-clone-auth --docker-server=https://
 <br><br/>
 ```
 Source Code:- https://github.com/kamalmohan217/Swiggy-Clone-App.git
+
+Helm Chart:- https://github.com/kamalmohan217/helm-repo-for-swiggy-clone.git
 ```
 <br><br/>
 <br><br/>
