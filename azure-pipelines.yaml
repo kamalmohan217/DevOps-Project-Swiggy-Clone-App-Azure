@@ -1,0 +1,87 @@
+trigger:
+- main
+
+pool:
+  name: demo
+  demands:
+  - agent.name -equals demo
+
+variables:
+  imagePullSecret: 'swiggy-clone-auth'
+
+stages:
+- stage: Build
+  displayName: Build
+  jobs:
+  - job: Build
+    displayName: Build
+    workspace:
+      clean: all
+    steps:
+    - task: CmdLine@2
+      inputs:
+        script: 'sonar-scanner -Dsonar.projectKey=swiggy-clone -Dsonar.projectName=swiggy-clone -Dsonar.qualitygate.wait=true -Dsonar.host.url=http://74.XXX.XX.110:9000 -Dsonar.login=squ_cXXXXXXXXXXXXXXXXb02XXXXXXXXXXXXXXXXXXXX'
+- stage: "InstallDependencies"
+  displayName: InstallDependencies
+  dependsOn: Build
+  jobs:
+  - job: "InstallDependencies"
+    displayName: InstallDependencies
+    steps: 
+    - checkout: none
+    - task: Npm@1
+      inputs:
+        command: 'install'
+        workingDir: '.'
+    - task: CmdLine@2
+      inputs:
+        script: 'dependency-check.sh --disableYarnAudit --disableNodeAudit --scan . --out .'
+    - task: CmdLine@2
+      inputs:
+        script: 'trivy fs . > /home/demo/trivy-filescan.txt'
+- stage: DockerImageBuild
+  displayName: DockerImageBuild
+  dependsOn: "InstallDependencies"
+  jobs:
+  - job: DockerImageBuild
+    displayName: DockerImageBuild
+    steps:
+    - checkout: none
+    - task: CmdLine@2
+      inputs:
+        script: |
+          docker system prune -f --all
+          docker build -t demoimage:1.05 .
+          docker tag demoimage:1.05 swiggycontainer24registry.azurecr.io/samplewebapp:$(Build.BuildId)
+          trivy image --exit-code 0 --severity MEDIUM,HIGH swiggycontainer24registry.azurecr.io/samplewebapp:$(Build.BuildId)
+          #trivy image --exit-code 1 --severity CRITICAL swiggycontainer24registry.azurecr.io/samplewebapp:$(Build.BuildId)
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'Docker-Registry'
+        repository: 'samplewebapp'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+- stage: KubernetesDeployment
+  displayName: KubernetesDeployment
+  dependsOn: DockerImageBuild
+  jobs:
+  - deployment: KubernetesDeployment
+    displayName: KubernetesDeployment
+    environment: "dev"
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: none 
+          - task: HelmDeploy@1
+            inputs:
+              connectionType: 'Azure Resource Manager'
+              azureSubscription: 'Azure DevOps Service Connection'
+              azureResourceGroup: 'swiggy-rg'
+              kubernetesCluster: 'swiggy-cluster'
+              namespace: 'swiggy'
+              command: 'upgrade'
+              chartType: 'FilePath'
+              chartPath: '/home/demo/helm-repo-for-swiggy-clone/folo'
+              releaseName: 'swiggy-clone'
+              overrideValues: 'imagePullSecrets[0].name=swiggy-clone-auth,image.repository=swiggycontainer24registry.azurecr.io/samplewebapp,image.tag=$(Build.BuildId),replicaCount=2,service.type=ClusterIP,service.port=80'
