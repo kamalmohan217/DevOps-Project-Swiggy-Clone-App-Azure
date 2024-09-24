@@ -11,7 +11,7 @@ The service connection has been created for Docker Registry as shown in the scre
 The screenshot for azure pipeline has been shown in the screenshot attached below.
 ![image](https://github.com/user-attachments/assets/0ff3ec77-f4eb-4dc2-8daf-6936480c395c)
 
-After runnging the Azure Pipeline the screenshot for SonarQube and swiggy app (ReactJs based User Interface which runs on port 3000) is shown in the screenshot attached below.
+After runnging the Azure Pipeline the screenshot for SonarQube and swiggy app (ReactJS based User Interface which runs on port 3000) is shown in the screenshot attached below.
 ![image](https://github.com/user-attachments/assets/a28837a3-2a6d-480f-b672-89458cfb09e6)
 ![image](https://github.com/user-attachments/assets/dd4c4d1b-f841-4ff0-8e71-b421dd5fccf3)
 
