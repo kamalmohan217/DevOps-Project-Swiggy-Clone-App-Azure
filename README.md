@@ -1,5 +1,6 @@
 # DevOps-Project-Swiggy-Clone-App-Azure
 
+![image](https://github.com/user-attachments/assets/9242ffdc-132a-4785-b853-8dcb82e2e7ec)
 
 
 
